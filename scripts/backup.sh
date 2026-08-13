@@ -1,6 +1,7 @@
 #!/bin/bash
 REPORT=~/linux-lab/logs/system-report.txt
 ARCHIVE_DIR=~/linux-lab/archive
+
 {
 	echo "System Report"
 echo "Generated:"
@@ -19,4 +20,11 @@ free -h
 
 } > "$REPORT"
 mkdir -p "$ARCHIVE_DIR"
-tar -czf "ARCHIVE_DIR/configs-backup.tar.gz" ~/linux-lab/configs
+
+if
+	tar -czf "$ARCHIVE_DIR/configs-backup.tar.gz" -C ~/linux-lab configs
+then
+	echo "Backup Successful!"
+else
+	echo "Backup FAILED!"
+fi
