@@ -16,7 +16,7 @@ MEMORY_USAGE=$(free -h)
 
 #Display system infromation
 echo "====== SYSTEM HEALTH CHECK ======"
-echo
+echo "Timestamp: $(date '+%Y-%m-%d %H:%M:%S')"
 echo "User: $CURRENT_USER"
 echo "Hostname: $HOSTNAME"
 echo

@@ -1,31 +1,13 @@
 #!/bin/bash
 
+echo "==== SYSTEM INFORMATION" ====
+echo "User: $USER"
+echo "Hostname: $(hostname)"
+echo "Operating System: $(cat /etc/redhat-release)"
+echo "Kernel: $(uname -r)"
+echo "Architecture: $(uname -m)"
+echo "Uptime: $(uptime -p)"
+echo ""
+echo "====ROOT FILESYSTEM===="
+df -h /
 
-#Hostname
-{
-	HOSTNAME=funnyguy
-	
-if	hostnamectl "funnyguy"; then
-	echo "its funny guy"
-else
-	echo "not funny guy"
-fi
-}
-#Current user
-{
-	ID=STUDENT 
-
-if id "student"; then
-	echo "ITS STUDENT"
-fi
-}
-#Current date/time
-date
-#Kernel version
-uname -r
-#Disk Usage
-df -h
-#Memory Usage
-free -h
-#How long the system has been running
-uptime
