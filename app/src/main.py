@@ -13,7 +13,7 @@ import time
 # Returns True if active False if inactive
 def check_service(service_name):
     result = subprocess.run(
-        ["systemctl", "is-active", "sshd"],
+        ["systemctl", "is-active", service_name],
         capture_output=True,
         text=True
     )
@@ -53,7 +53,7 @@ def display_config(config):
 
 #Satellite data:
 # Stores the current state of each satellite.
-# Each satellite is represented as a dictionary containing id, altitude, connection status, & TLM.
+# Each satellite is represented as a dictionary containing id, altitude, connection status, contact state, & TLM.
 satellites = [
     {
         "satellite": "SAT-001",
@@ -125,16 +125,6 @@ def show_telemetry(satellite):
     print(f"Signal Strength: {telemetry['signal_strength']} dbm")
     print()
 
-#update_telemetry:
-# Updates the telemtry values stored in a satellite's dictionary.
-#def update_telemetry(satellite, temperature, battery, signal_strength):
- #   if satellite is None:
-  #      print("Satellite not found.")
-   #     return
-   #satellite["telemetry"]["temperature"] = temperature
-   #satellite["telemetry"]["battery"] = battery
-    #satellite["telemetry"]["signal_strength"] = signal_strength
-
 #simulate_telemetry
 # Generates random telemetry values within defined ranges to simulate changing satellite conditions.
 def simulate_telemetry(satellite):
@@ -150,27 +140,19 @@ def simulate_telemetry(satellite):
 
     satellite["telemetry"]["signal_strength"] = random.randint(-90, -60)
 
-#Main application flow:
-# Select a satellite and continuously simulate telemetry updates for a limited number of readings.
-selected_satellite = find_satellite(satellites, "SAT-001")
-for i in range(2):
-    simulate_telemetry(selected_satellite)
-    show_telemetry(selected_satellite)
-    time.sleep(1)
-
 def initiate_contact(satellite):
     if satellite is None:
         print("Satellite not found.")
         return
-    
+ 
     if not satellite["connected"]:
         print(f"{satellite['satellite']} is not connected.")
         return
-
+ 
     if satellite["contact_active"]:
         print(f"Contact already active with {satellite['satellite']}.")
         return
-
+ 
     satellite["contact_active"] = True
     print(f"Contact initiated with {satellite['satellite']}.")
 
@@ -178,11 +160,11 @@ def terminate_contact(satellite):
     if satellite is None:
         print("Satellite not found.")
         return
-    
+
     if not satellite["contact_active"]:
         print(f"No active contact with {satellite['satellite']}.")
         return
-
+    
     satellite["contact_active"] = False
     print(f"Contact terminated with {satellite['satellite']}.")
 
@@ -190,29 +172,31 @@ def show_contact_status(satellite):
     if satellite is None:
         print("Satellite not found.")
         return
-    
+
     if satellite["contact_active"]:
         print(f"Contact ACTIVE with {satellite['satellite']}.")
     else:
-        print(f"Not active contact with {satellite['satellite']}.")
+        print(f"No active contact with {satellite['satellite']}.")
 
-selected_satellite = find_satellite(satellite, "SAT-001")
+#Main application flow:
+# Select a satellite and continuously simulate telemetry updates for a limited number of readings.
+config = load_config()
+display_config(config)
+
+online = check_service("sshd")
+show_status(online)
+
+# Select satellite and simulate telemetry.
+selected_satellite = find_satellite(satellites, "SAT-001")
+
+for i in range(2):
+    simulate_telemetry(selected_satellite)
+    show_telemetry(selected_satellite)
+    time.sleep(1)
+
+# Test satellite contact lifecycle.
 show_contact_status(selected_satellite)
 initiate_contact(selected_satellite)
 show_contact_status(selected_satellite)
 terminate_contact(selected_satellite)
 show_contact_status(selected_satellite)
-
-#Temporary commands
-selected_satellite = find_satellite(satellites, "SAT-001")
-print("Before:")
-print(selected_satellite)
-initiate_contact(selected_satellite)
-print("After:")
-print(selected_satellite)
-initiate_contact(selected_satellite)
-
-config = load_config()
-display_config(config)
-online = check_service("sshd")
-show_status(online)
