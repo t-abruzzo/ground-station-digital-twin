@@ -152,11 +152,11 @@ def simulate_telemetry(satellite):
 
 #Main application flow:
 # Select a satellite and continuously simulate telemetry updates for a limited number of readings.
-selected_satellite = find_satellite(satellites, "SAT-001")
+selected_satellite = find_satellite(satellites, "SAT-002")
 for i in range(2):
     simulate_telemetry(selected_satellite)
     show_telemetry(selected_satellite)
-    time.sleep(1)
+    time.sleep(2)
 
 def initiate_contact(satellite):
     if satellite is None:
@@ -174,37 +174,8 @@ def initiate_contact(satellite):
     satellite["contact_active"] = True
     print(f"Contact initiated with {satellite['satellite']}.")
 
-def terminate_contact(satellite):
-    if satellite is None:
-        print("Satellite not found.")
-        return
-    
-    if not satellite["contact_active"]:
-        print(f"No active contact with {satellite['satellite']}.")
-        return
-
-    satellite["contact_active"] = False
-    print(f"Contact terminated with {satellite['satellite']}.")
-
-def show_contact_status(satellite):
-    if satellite is None:
-        print("Satellite not found.")
-        return
-    
-    if satellite["contact_active"]:
-        print(f"Contact ACTIVE with {satellite['satellite']}.")
-    else:
-        print(f"Not active contact with {satellite['satellite']}.")
-
-selected_satellite = find_satellite(satellite, "SAT-001")
-show_contact_status(selected_satellite)
-initiate_contact(selected_satellite)
-show_contact_status(selected_satellite)
-terminate_contact(selected_satellite)
-show_contact_status(selected_satellite)
-
 #Temporary commands
-selected_satellite = find_satellite(satellites, "SAT-001")
+selected_satellite = find_satellite(satellites, "SAT-002")
 print("Before:")
 print(selected_satellite)
 initiate_contact(selected_satellite)
