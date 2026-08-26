@@ -3,10 +3,8 @@
 # Imports:
 # subprocess = allows Python to interact with Linux commands
 # random = generates simulated telemetry values
-# time = controls the delay between telemetry updates
 import subprocess
 import random
-import time
 
 #check_service:
 # Checks whether a Linux service is currently active.
@@ -160,6 +158,9 @@ def simulate_telemetry(satellite):
 
     satellite["telemetry"]["signal_strength"] = random.randint(-90, -60)
 
+#validate_contact_requirements()
+# Checks whether a satellite meets all requirements needed to establish contact.
+# Returns True when all requirements pass and False when any requirement fails.
 def validate_contact_requirements(satellite):
     signal_strength = satellite["telemetry"]["signal_strength"]
     minimum_signal = satellite["contact_requirements"]["min_signal_strength"]
@@ -168,7 +169,7 @@ def validate_contact_requirements(satellite):
         print(f"Contact requirements not met for {satellite['satellite']}.")
         print(f"Signal strength: {signal_strength} dBm")
         print(f"Minimum required: {minimum_signal} dBm")
-        return
+        return False
  
     battery = satellite["telemetry"]["battery"]
     minimum_battery = satellite["contact_requirements"]["min_battery"]
@@ -177,7 +178,7 @@ def validate_contact_requirements(satellite):
         print(f"Contact requirements not met for {satellite['satellite']}.")
         print(f"Battery: {battery}%")
         print(f"Minimum required: {minimum_battery}%")
-        return
+        return False
  
     altitude = satellite["altitude"]
     minimum_altitude = satellite["contact_requirements"]["min_altitude"]
@@ -193,6 +194,9 @@ def validate_contact_requirements(satellite):
         return False
     return True
 
+#initiate_contact
+# Attempts to establish communication with a selected satellite.
+# Contact can only begin if the satellite is connected and all requirements pass.
 def initiate_contact(satellite):
     if satellite is None:
         print("Satellite not found.")
@@ -212,6 +216,8 @@ def initiate_contact(satellite):
     satellite["contact_active"] = True
     print(f"Contact initiated with {satellite['satellite']}.")
 
+#terminate_contact
+# Ends an active communication contact with the selected satellite.
 def terminate_contact(satellite):
     if satellite is None:
         print("Satellite not found.")
@@ -224,6 +230,8 @@ def terminate_contact(satellite):
     satellite["contact_active"] = False
     print(f"Contact terminated with {satellite['satellite']}.")
 
+#show_contact_status
+# Displays whether the selected satellite currently has an active contact.
 def show_contact_status(satellite):
     if satellite is None:
         print("Satellite not found.")
@@ -234,6 +242,8 @@ def show_contact_status(satellite):
     else:
         print(f"No active contact with {satellite['satellite']}.")
 
+#show_menu
+# Displays the available ground station operations for the operator.
 def show_menu():
     print()
     print("===== GROUND STATION MENU =====")
@@ -252,11 +262,15 @@ def show_menu():
 config = load_config()
 display_config(config)
 
+online = check_service("sshd")
+show_status(online)
+
 selected_satellite = None
+
 while True:
     show_menu()
 
-    choice = input("Select an opion: ")
+    choice = input("Select an option: ")
     
     if choice == "1":
         display_satellites(satellites)
@@ -298,20 +312,3 @@ while True:
     else:
         print("Invalid option. Please select 1-8.")
 
-online = check_service("sshd")
-show_status(online)
-
-# Select satellite and simulate telemetry.
-selected_satellite = find_satellite(satellites, "SAT-001")
-
-for i in range(2):
-    simulate_telemetry(selected_satellite)
-    show_telemetry(selected_satellite)
-    time.sleep(1)
-
-# Test satellite contact lifecycle.
-show_contact_status(selected_satellite)
-initiate_contact(selected_satellite)
-show_contact_status(selected_satellite)
-terminate_contact(selected_satellite)
-show_contact_status(selected_satellite)
