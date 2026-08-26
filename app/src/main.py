@@ -60,9 +60,15 @@ satellites = [
         "altitude": 600,
         "connected": True,
         "contact_active": False,
+        "contact_requirements": {
+            "min_signal_strength": -80,
+            "min_battery": 20,
+            "min_altitude": 500,
+            "max_altitude": 800
+        },
         "telemetry": {
             "temperature": 22.5,
-            "battery": 87,
+            "battery": 80,
             "signal_strength": -72
         }
     },
@@ -71,6 +77,12 @@ satellites = [
         "altitude": 700,
         "connected": False,
         "contact_active": False,
+        "contact_requirements": {
+            "min_signal_strength": -89,
+            "min_battery": 20,
+            "min_altitude": 500,
+            "max_altitude": 800
+         },
         "telemetry": {
             "temperature": 19.8,
             "battery": 64,
@@ -114,10 +126,18 @@ def show_satellite_details(satellite):
 #show_telemetry:
 # Displays the current telemetry values for a selected satellite.
 def show_telemetry(satellite):
+
     if satellite is None:
         print("Satellite not found")
         return
+
     telemetry = satellite["telemetry"]
+
+    if satellite["contact_active"]:
+        print(f"\nLIVE TELEMETRY for {satellite['satellite']}:")
+    else:
+        print(f"\nLAST KNOWN TELEMETRY for {satellite['satellite']}:")
+
     print()
     print(f"Telemetry for {satellite['satellite']}:")
     print(f"Temperature: {telemetry['temperature']} C")
@@ -140,6 +160,39 @@ def simulate_telemetry(satellite):
 
     satellite["telemetry"]["signal_strength"] = random.randint(-90, -60)
 
+def validate_contact_requirements(satellite):
+    signal_strength = satellite["telemetry"]["signal_strength"]
+    minimum_signal = satellite["contact_requirements"]["min_signal_strength"]
+
+    if signal_strength < minimum_signal:
+        print(f"Contact requirements not met for {satellite['satellite']}.")
+        print(f"Signal strength: {signal_strength} dBm")
+        print(f"Minimum required: {minimum_signal} dBm")
+        return
+ 
+    battery = satellite["telemetry"]["battery"]
+    minimum_battery = satellite["contact_requirements"]["min_battery"]
+ 
+    if battery < minimum_battery:
+        print(f"Contact requirements not met for {satellite['satellite']}.")
+        print(f"Battery: {battery}%")
+        print(f"Minimum required: {minimum_battery}%")
+        return
+ 
+    altitude = satellite["altitude"]
+    minimum_altitude = satellite["contact_requirements"]["min_altitude"]
+    maximum_altitude = satellite["contact_requirements"]["max_altitude"]
+ 
+    if altitude < minimum_altitude or altitude > maximum_altitude:
+        print(f"Contact requirements not met for {satellite['satellite']}.")
+        print(f"Altitude: {altitude} km")
+        print(
+            f"Required altitude: "
+            f"{minimum_altitude}-{maximum_altitude} km"
+        )
+        return False
+    return True
+
 def initiate_contact(satellite):
     if satellite is None:
         print("Satellite not found.")
@@ -152,7 +205,10 @@ def initiate_contact(satellite):
     if satellite["contact_active"]:
         print(f"Contact already active with {satellite['satellite']}.")
         return
- 
+    
+    if not validate_contact_requirements(satellite):
+        return
+
     satellite["contact_active"] = True
     print(f"Contact initiated with {satellite['satellite']}.")
 
@@ -178,10 +234,69 @@ def show_contact_status(satellite):
     else:
         print(f"No active contact with {satellite['satellite']}.")
 
+def show_menu():
+    print()
+    print("===== GROUND STATION MENU =====")
+    print("1. List Satellites")
+    print("2. Select Satellite")
+    print("3. Show Telemetry")
+    print("4. Update Telemetry")
+    print("5. Initiate Contact")
+    print("6. Terminate Contact")
+    print("7. Show Contact Status")
+    print("8. Exit")
+    print("===============================")
+
 #Main application flow:
 # Select a satellite and continuously simulate telemetry updates for a limited number of readings.
 config = load_config()
 display_config(config)
+
+selected_satellite = None
+while True:
+    show_menu()
+
+    choice = input("Select an opion: ")
+    
+    if choice == "1":
+        display_satellites(satellites)
+
+    elif choice == "2":
+        satellite_name = input("Enter satellite ID: ")
+        selected_satellite = find_satellite(satellites, satellite_name)    
+        if selected_satellite is None:
+            print("Satellite not found.")
+        else:
+            print(f"{satellite_name} selected.")
+
+    elif choice == "3":
+        show_telemetry(selected_satellite)
+
+    elif choice == "4":
+        if selected_satellite is None:
+            print("No satellite selected")
+        elif not selected_satellite["contact_active"]:
+            print(f"No active contact with {selected_satellite['satellite']}.")
+            print("Telemetry cannot be updated")
+        else:
+            simulate_telemetry(selected_satellite)
+            show_telemetry(selected_satellite)
+
+    elif choice == "5":
+        initiate_contact(selected_satellite)
+
+    elif choice == "6":
+        terminate_contact(selected_satellite)
+  
+    elif choice == "7":
+        show_contact_status(selected_satellite)
+
+    elif choice == "8":
+        print("Ground Station Simulator shutting down.")
+        break
+    
+    else:
+        print("Invalid option. Please select 1-8.")
 
 online = check_service("sshd")
 show_status(online)
