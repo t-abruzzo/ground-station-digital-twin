@@ -68,7 +68,8 @@ satellites = [
             "temperature": 22.5,
             "battery": 80,
             "signal_strength": -72
-        }
+        },
+        "command_history":[]
     },
     {
         "satellite": "SAT-002",
@@ -85,7 +86,8 @@ satellites = [
             "temperature": 19.8,
             "battery": 64,
             "signal_strength": -85
-        }
+        },
+        "command_history":[]
      }
 ]
  
@@ -242,6 +244,72 @@ def show_contact_status(satellite):
     else:
         print(f"No active contact with {satellite['satellite']}.")
 
+#available_commands
+# Defines the commands that the ground station is allowed to send.
+available_commands = [
+    "RESET",
+    "TRANSMIT_STATUS",
+    "SAFE_MODE"
+]
+
+#validate_command:
+# Checks whether a command is supported by the ground station.
+# Returns True when the command is valid and False when it is invalid.
+def validate_command(command):
+    if command not in available_commands:
+        print(f"INVALID COMMAND: {command}")
+        print("AVAILABLE COMMANDS:")
+        for available_command in available_commands:
+            print(f"- {available_command}")
+        return False
+
+    return True
+
+#execute_command:
+# Executes a valid command and changes simulated satellite state.
+def execute_command(satellite, command):
+    if command == "RESET":
+        satellite["telemetry"]["temperature"] = 20.0
+        satellite["telemetry"]["battery"] = 100
+        print(f"{satellite['satellite']} reset completed.")
+
+    elif command == "TRANSMIT_STATUS":
+        show_telemetry(satellite)
+
+    elif command == "SAFE_MODE":
+        satellite["safe_mode"] = True
+        print(f"{satellite['satellite']} entered SAFE MODE.")
+
+
+#acknowledge_command:
+# Simulates a satellite acknowledging receipt of a valid command.
+def acknowledge_command(satellite, command):
+    print(f"{satellite['satellite']} acknowledged command: {command}")
+
+#send_command:
+# Sends a command to a satellite during an active contact.
+# Stores the command in the satellites command history.
+def send_command(satellite, command):
+    if satellite is None:
+        print("satellite not found.")
+        return
+
+    if not satellite["contact_active"]:
+        print(f"No active contact with {satellite['satellite']}.")
+        print("command cannot be sent.")
+        return
+    
+    if not validate_command(command):
+        return
+
+    satellite["command_history"].append(command)
+    
+    print(f"Command sent to {satellite['satellite']}: {command}")
+
+    acknowledge_command(satellite, command)
+
+    execute_command(satellite, command)
+
 #show_menu
 # Displays the available ground station operations for the operator.
 def show_menu():
@@ -254,7 +322,8 @@ def show_menu():
     print("5. Initiate Contact")
     print("6. Terminate Contact")
     print("7. Show Contact Status")
-    print("8. Exit")
+    print("8. Send Command")
+    print("9. Exit")
     print("===============================")
 
 #Main application flow:
@@ -306,9 +375,13 @@ while True:
         show_contact_status(selected_satellite)
 
     elif choice == "8":
+        command = input("Enter command: ")
+        send_command(selected_satellite, command)
+
+    elif choice == "9":
         print("Ground Station Simulator shutting down.")
         break
     
     else:
-        print("Invalid option. Please select 1-8.")
+        print("Invalid option. Please select 1-9.")
 
