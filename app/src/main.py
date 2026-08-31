@@ -69,7 +69,8 @@ satellites = [
             "battery": 80,
             "signal_strength": -72
         },
-        "command_history":[]
+        "command_history":[],
+        "contact_command_start": 0,
     },
     {
         "satellite": "SAT-002",
@@ -87,7 +88,8 @@ satellites = [
             "battery": 64,
             "signal_strength": -85
         },
-        "command_history":[]
+        "command_history":[],
+        "contact_command_start": 0,
      }
 ]
  
@@ -216,6 +218,8 @@ def initiate_contact(satellite):
         return
 
     satellite["contact_active"] = True
+    satellite["contact_command_start"] = len(satellite["command_history"])
+
     print(f"Contact initiated with {satellite['satellite']}.")
 
 #terminate_contact
@@ -310,6 +314,30 @@ def send_command(satellite, command):
 
     execute_command(satellite, command)
 
+#show_command_history
+# Displays the commands that have been sent to the selected satellite.
+def show_command_history(satellite):
+    if satellite is None:
+        print("Satellite not found.")
+        return
+
+    print(f"\nCommand History for {satellite['satellite']}:")
+
+    if not satellite["command_history"]:
+        print("No commands have been sent.")
+        return
+
+    current_contact_commands = satellite["command_history"][
+        satellite["contact_command_start"]:
+    ]
+    
+    for command in current_contact_commands:
+        print(f"- {command}")
+
+    print(f"Command Count: {len(satellite['command_history'])}")
+    print()
+
+
 #show_menu
 # Displays the available ground station operations for the operator.
 def show_menu():
@@ -323,7 +351,8 @@ def show_menu():
     print("6. Terminate Contact")
     print("7. Show Contact Status")
     print("8. Send Command")
-    print("9. Exit")
+    print("9. Show Command History")
+    print("10. Exit")
     print("===============================")
 
 #Main application flow:
@@ -378,10 +407,13 @@ while True:
         command = input("Enter command: ")
         send_command(selected_satellite, command)
 
-    elif choice == "9":
+    elif choice =="9":
+        show_command_history(selected_satellite)
+
+    elif choice == "10":
         print("Ground Station Simulator shutting down.")
         break
     
     else:
-        print("Invalid option. Please select 1-9.")
+        print("Invalid option. Please select 1-10.")
 
