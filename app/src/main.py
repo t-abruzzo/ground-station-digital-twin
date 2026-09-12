@@ -71,6 +71,7 @@ satellites = [
             "signal_strength": -72
         },
         "command_history":[],
+        "command_queue":[],
         "contact_command_start": 0,
     },
     {
@@ -91,6 +92,7 @@ satellites = [
             "signal_strength": -85
         },
         "command_history":[],
+        "command_queue":[],
         "contact_command_start": 0,
      }
 ]
@@ -328,24 +330,70 @@ def send_command(satellite, command):
         print(f"{satellite['satellite']} is in SAFE MODE.")
         print(f"Command rejected: {command}")
         return
-    
-    satellite["command_history"].append(command)
+
+    command_record = {
+        "command": command
+    }    
     
     print(f"Command sent to {satellite['satellite']}: {command}")
 
     receipt = acknowledge_command(satellite, command)
 
     if receipt and receipt["status"] == "RECEIVED":
+        command_record["receipt"] = "RECEIVED"
         print(f"Command receipt verified: {receipt['command']}")
     else:
+        command_record["receipt"] = "NOT_RECEIVED"
         print(f"Command receipt NOT verified: {command}")
 
     execution_success = execute_command(satellite, command)
 
     if execution_success:
+        command_record["execution"] = "SUCCESS"
         print(f"Command execution successful: {command}")
     else:
+        command_record["execution"] = "FAILED"
         print(f"Command execution failed: {command}")
+    
+    satellite["command_history"].append(command_record)
+
+#schedule_command:
+# Adds a valid command to the satellite's command queue.
+def schedule_command(satellite, command):
+    if satellite is None:
+        print("Satellite not found.")
+        return
+
+    if not validate_command(command):
+        return
+    
+    command_record = {
+        "command": command,
+        "status": "QUEUED"
+    }
+
+    satellite["command_queue"].append(command_record)
+
+    print(f"Command scheduled for {satellite['satellite']}: {command}")
+
+#show_command_queue
+# Displays commands currently waiting in the satellite's command queue.
+def show_command_queue(satellite):
+    if satellite is None:
+        print("Satellite not found.")
+        return
+    
+    print(f"\nCommand Queue for {satellite['satellite']}:")
+
+    if not satellite["command_queue"]:
+        print("No commands are currently queued.")
+        return
+
+    for command_record in satellite["command_queue"]:
+        print(f"- Command: {command_record['command']}")
+        print(f"  Status: {command_record['status']}")
+
+    print()
 
 #show_command_history
 # Displays the commands that have been sent to the selected satellite.
@@ -364,8 +412,10 @@ def show_command_history(satellite):
         satellite["contact_command_start"]:
     ]
     
-    for command in current_contact_commands:
-        print(f"- {command}")
+    for command_record in current_contact_commands:
+        print(f"- Command: {command_record['command']}")
+        print(f"  Receipt: {command_record['receipt']}")
+        print(f"  Execution: {command_record['execution']}")
 
     print(f"Command Count: {len(satellite['command_history'])}")
     print()
@@ -385,7 +435,9 @@ def show_menu():
     print("7. Show Contact Status")
     print("8. Send Command")
     print("9. Show Command History")
-    print("10. Exit")
+    print("10. Schedule Command")
+    print("11. Show Command Queue")
+    print("12. Exit")
     print("===============================")
 
 #Main application flow:
@@ -440,10 +492,17 @@ while True:
         command = input("Enter command: ")
         send_command(selected_satellite, command)
 
-    elif choice =="9":
+    elif choice == "9":
         show_command_history(selected_satellite)
 
     elif choice == "10":
+        command = input("Enter command to schedule: ")
+        schedule_command(selected_satellite, command)
+
+    elif choice == "11":
+        show_command_queue(selected_satellite)
+
+    elif choice == "12":
         print("Ground Station Simulator shutting down.")
         break
     
