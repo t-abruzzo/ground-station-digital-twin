@@ -58,6 +58,7 @@ satellites = [
         "altitude": 600,
         "connected": True,
         "contact_active": False,
+        "safe_mode": False,
         "contact_requirements": {
             "min_signal_strength": -80,
             "min_battery": 20,
@@ -77,6 +78,7 @@ satellites = [
         "altitude": 700,
         "connected": False,
         "contact_active": False,
+        "safe_mode": False,
         "contact_requirements": {
             "min_signal_strength": -89,
             "min_battery": 20,
@@ -119,10 +121,12 @@ def show_satellite_details(satellite):
     if satellite is None:
         print("Satellite not found.")
         return
+
     print()
     print(f"Satellite: {satellite['satellite']}")
     print(f"Altitude: {satellite['altitude']}km")
     print(f"Connected: {satellite['connected']}")
+    print(f"Safe Mode: {satellite['safe_mode']}")
     print()
 
 #show_telemetry:
@@ -253,7 +257,8 @@ def show_contact_status(satellite):
 available_commands = [
     "RESET",
     "TRANSMIT_STATUS",
-    "SAFE_MODE"
+    "SAFE_MODE",
+    "TEST"
 ]
 
 #validate_command:
@@ -276,19 +281,32 @@ def execute_command(satellite, command):
         satellite["telemetry"]["temperature"] = 20.0
         satellite["telemetry"]["battery"] = 100
         print(f"{satellite['satellite']} reset completed.")
+        return True
 
     elif command == "TRANSMIT_STATUS":
         show_telemetry(satellite)
+        return True
 
     elif command == "SAFE_MODE":
         satellite["safe_mode"] = True
+        satellite["telemetry"]["temperature"] = 20.0
         print(f"{satellite['satellite']} entered SAFE MODE.")
+        return True
 
+    return False
 
 #acknowledge_command:
 # Simulates a satellite acknowledging receipt of a valid command.
 def acknowledge_command(satellite, command):
+    receipt = {
+        "satellite": satellite["satellite"],
+        "command": command,
+        "status": "RECEIVED"
+    }
+
     print(f"{satellite['satellite']} acknowledged command: {command}")
+
+    return receipt
 
 #send_command:
 # Sends a command to a satellite during an active contact.
@@ -306,13 +324,28 @@ def send_command(satellite, command):
     if not validate_command(command):
         return
 
+    if satellite["safe_mode"] and command != "TRANSMIT_STATUS":
+        print(f"{satellite['satellite']} is in SAFE MODE.")
+        print(f"Command rejected: {command}")
+        return
+    
     satellite["command_history"].append(command)
     
     print(f"Command sent to {satellite['satellite']}: {command}")
 
-    acknowledge_command(satellite, command)
+    receipt = acknowledge_command(satellite, command)
 
-    execute_command(satellite, command)
+    if receipt and receipt["status"] == "RECEIVED":
+        print(f"Command receipt verified: {receipt['command']}")
+    else:
+        print(f"Command receipt NOT verified: {command}")
+
+    execution_success = execute_command(satellite, command)
+
+    if execution_success:
+        print(f"Command execution successful: {command}")
+    else:
+        print(f"Command execution failed: {command}")
 
 #show_command_history
 # Displays the commands that have been sent to the selected satellite.
