@@ -369,7 +369,8 @@ def schedule_command(satellite, command):
     
     command_record = {
         "command": command,
-        "status": "QUEUED"
+        "status": "QUEUED",
+        "result": None
     }
 
     satellite["command_queue"].append(command_record)
@@ -392,8 +393,43 @@ def show_command_queue(satellite):
     for command_record in satellite["command_queue"]:
         print(f"- Command: {command_record['command']}")
         print(f"  Status: {command_record['status']}")
+        print(f"  Result: {command_record['result']}")
 
     print()
+
+#process_command_queue:
+# Sends all queued commands to the satellite during an active contact.
+def process_command_queue(satellite):
+    if satellite is None:
+        print("Satellite not found")
+        return
+
+    if not satellite["contact_active"]:
+        print("No active contact with {satellite['satellite']}.")
+        print("command queue cannot be processed.")
+        return
+
+    if not satellite["command_queue"]:
+        print("No commands are currently queued.")
+        return
+
+    print(f"\nProcessing command queue for {satellite['satellite']}...")
+    
+    while satellite["command_queue"]:
+        command_record = satellite["command_queue"].pop(0)
+        command = command_record["command"]
+
+        command_record["status"] = "PROCESSING"
+        print(f"\nProcessing queued command: {command}")
+
+        send_command(satellite, command)
+
+        command_record["status"] = "COMPLETED"
+        command_record["result"] = "SUCCESS"
+
+    satellite["command_queue"] = []
+    
+    print("\nCommand queue processing complete.")
 
 #show_command_history
 # Displays the commands that have been sent to the selected satellite.
@@ -437,7 +473,8 @@ def show_menu():
     print("9. Show Command History")
     print("10. Schedule Command")
     print("11. Show Command Queue")
-    print("12. Exit")
+    print("12. Process Command Queue")
+    print("13. Exit")
     print("===============================")
 
 #Main application flow:
@@ -503,9 +540,12 @@ while True:
         show_command_queue(selected_satellite)
 
     elif choice == "12":
+        process_command_queue(selected_satellite)
+
+    elif choice == "13":
         print("Ground Station Simulator shutting down.")
         break
     
     else:
-        print("Invalid option. Please select 1-10.")
+        print("Invalid option. Please select 1-13.")
 
